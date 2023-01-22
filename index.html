@@ -1,0 +1,396 @@
+<!-- full snake game -->
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Snake Game</title>
+ <style>
+	*{
+		margin: 0;
+		padding: 0;
+		box-sizing: border-box;
+	}
+
+	.container{
+		/* width: 100vw; */
+		height: 100vh;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		border: 1px solid #000;
+	}
+	.score{
+		top: 0;
+		right: 0;
+		font-size: 2rem;
+		color: #000;
+	}
+	.game-area{
+		width: 50vw;
+		height: 50vw;
+		background-color: #fff;
+		display: grid;
+		border: 1px solid;
+		grid-template-columns: repeat(50, 1fr);
+		grid-template-rows: repeat(50, 1fr);
+	
+	}
+	.snake{
+		background-color: #000;
+		border: 1px solid green;
+	}
+	.food{
+		background-color: red;
+				border: 1px solid green;
+		border-radius: 50%;
+	}
+    .head{
+		background-color: green;
+
+	}
+
+	.mobile-buttons .keys{
+			border: 2px solid #000;
+		padding: 1.5rem;
+	}
+
+	.mobile-buttons button{
+		width: 100px;
+		height: 100px;
+		border-radius: 50%;
+		background-color: #000;
+		color: #fff;
+		font-size: 1.5rem;
+		margin: 10px;
+	}
+
+	.mobile-buttons-up-down button{
+		width: 100px;
+		height: 100px;
+		border-radius: 50%;
+	
+		background-color: #000;
+		color: #fff;
+		font-size: 1.5rem;
+		margin: 10px;
+	}
+
+	.mobile-buttons-up-down .keys{
+		display: flex;
+		flex-direction: column;
+		border: 2px solid #000;
+		padding: 1.5rem;
+	}
+
+
+	.game{
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+	}
+	
+
+@media only screen and (max-width: 600px) {
+			body{
+				background-color: red;
+			}
+	}
+	
+ </style>
+</head>
+<body>
+	<div class="game">
+		<div class="mobile-buttons-up-down">
+			<div class="keys">
+			<button id="up">Up</button>
+			<button id="down">Down</button>
+	
+			</div>
+		</div>
+
+	<div class="container">
+		<div id="hiscore"></div>
+		<div class="score">
+
+			<span>Score: </span>
+			<span id="score">0</span>
+		</div>
+		<div class="game-area">
+			<div class="snake"></div>
+			<div class="food"></div>
+		</div>
+		<!-- mobile buttons -->
+	
+			
+			<div class="speed">
+				<label for="speed">Speed</label>
+				<input type="range" id="speed" name="speed" min="1" max="100" value="10">
+			</div>
+			
+			<div class="sentences">
+
+			</div>
+	
+	
+
+		</div>
+		<div class="mobile-buttons">
+			<div class="keys">
+	
+			<button id="left">Left</button>
+			<button id="right">Right</button>
+			</div>
+		</div>
+				</div>
+
+	<script >
+		// snake logic
+		let snake = [
+			{x: 2, y: 0},
+			{x: 1, y: 0},
+			{x: 0, y: 0}
+		];
+		let food = [{x: 6, y: 5}];
+		let score = 0;
+		let gameArea = document.querySelector('.game-area');
+		let height = gameArea.clientHeight;
+		let width = gameArea.clientWidth;
+
+		const sentences = [
+			"Why did the snake put off shedding its skin? It was too busy slithering around.",
+"Why did the snake procrastinate on its homework? It was too busy coil-ing around.",
+"Why did the snake delay its nap? It was too busy hissing and missing.",
+"Why did the snake postpone its meal? It was too busy being a snake in the grass.",
+"Why did the snake take forever to leave its cage? It was too busy being a cagey procrastinator.",
+"Why did the snake keep putting off its workout? It was too tired from all the snake-a-ling.",
+"Why did the snake wait so long to make a decision? It was too busy being a snake in the decision-making process.",
+"Why did the snake put off its grooming? It was too busy being a snake in the beauty salon.",
+"Why did the snake procrastinate on finding a mate? It was too busy playing the field of snakes.",
+"Why did the snake delay its escape? It was too busy being a snake in the exit plan.",
+"Why did the snake wait so long to strike? It was too busy taking its time, like a procrastinating snake.",
+"Why did the snake put off its venom production? It was too busy being a snake in the venom-making process.",
+"Why did the snake wait to start its diet? It was too busy munching on procrastination snacks.",
+"Why did the snake delay its hibernation? It was too busy being a procrastinating snake in the winter.",
+"Why did the snake put off its sunbathing? It was too busy slithering around in the shade.",
+		]
+const sentencesElement = document.querySelector('.sentences');
+		let lastPaintTime = 0;
+		let speed = 18;
+		let hiscoreBox = document.getElementById('hiscore');
+		let snakeArr = [
+			{x: 4, y: 4},
+			{x: 3, y: 4},
+			{x: 2, y: 4}
+		];
+		
+		let inputDir = {x: 0, y: 0};
+		let lastInputDir = {x: 0, y: 0};
+		function main(ctime){
+			window.requestAnimationFrame(main);
+			if((ctime - lastPaintTime)/1000 < 1/speed){
+				return;
+			}
+			lastPaintTime = ctime;
+			gameEngine();
+		}
+
+		let speedRange = document.getElementById('speed');
+		speedRange.addEventListener('change', function(){
+			speed = speedRange.value;
+		});
+
+		function isCollide(snake){
+		
+			for(let i = 1; i < snakeArr.length; i++){
+
+				if(snake[i].x === snake[0].x && snake[i].y === snake[0].y){
+
+						if(lastInputDir.x === -inputDir.x && lastInputDir.y === -inputDir.y ){
+				console.log("miss",lastInputDir.x,-inputDir.x ,lastInputDir.y,-inputDir.y)
+				return;
+			}
+					snakeArr.splice(i, snakeArr.length);
+					
+				}
+			}
+			// if you bump into the wall
+				// jump to the other side
+				if(snakeArr[0].x > 50){
+					snakeArr[0].x = 0;
+				}
+				if(snakeArr[0].x < 0){
+					snakeArr[0].x = 50;
+				}
+				if(snakeArr[0].y > 50){
+					snakeArr[0].y = 0;
+				}
+				if(snakeArr[0].y < 0){
+					snakeArr[0].y = 50;
+				}
+
+
+			
+		}
+
+		function gameEngine(){
+				isCollide(snakeArr);
+				let currFruitEatn = food.filter(f=>f.y===snakeArr[0].y && snakeArr[0].x ===  f.x )
+				
+			if(currFruitEatn.length){
+				score += 1;
+				sentencesElement.innerHTML += "("+score+")"+  sentences.pop()+"<br>";
+				sentencesElement.style.color = `red`;
+				sentencesElement.style.fontSize = `${4*score}px`;
+				if(score > hiscoreval){
+					hiscoreval = score;
+					localStorage.setItem("hiscore", JSON.stringify(hiscoreval));
+					hiscoreBox.innerHTML = "HiScore: " + hiscoreval;
+				}
+				document.getElementById('score').innerHTML = score;
+							
+	
+				snakeArr.unshift({x: snakeArr[0].x + inputDir.x, y: snakeArr[0].y + inputDir.y});
+				let a = 1;
+				let b = 50;
+				food = food.filter(f=>f!==currFruitEatn[0] )
+				
+				food.push({x: Math.round(a + (b-a)*Math.random()), y: Math.round(a + (b-a)*Math.random())})
+					
+				
+			}
+			// moving the snake
+			for(let i = snakeArr.length - 2; i >= 0; i--){
+				snakeArr[i+1] = {...snakeArr[i]};
+			}
+			snakeArr[0].x += inputDir.x;
+			snakeArr[0].y += inputDir.y;
+			// part 2: display the snake and food
+			// display the snake
+			gameArea.innerHTML = "";
+			snakeArr.forEach((e, index) => {
+				snakeElement = document.createElement('div');
+				snakeElement.style.gridRowStart = e.y;
+				snakeElement.style.gridColumnStart = e.x;
+				if(index === 0){
+					snakeElement.classList.add('head');
+					// add head radius with the current direction
+					if(inputDir.x === 1){
+						snakeElement.style.borderRadius = "0% 50% 50% 0%";
+					}
+					else if(inputDir.x === -1){
+						snakeElement.style.borderRadius = "50% 0% 0% 50%";
+					}
+					else if(inputDir.y === 1){
+						snakeElement.style.borderRadius = "0% 0% 50% 50%";
+					}
+					else if(inputDir.y === -1){
+						snakeElement.style.borderRadius = "50% 50% 0% 0%";
+					}
+				}
+				else{
+					snakeElement.classList.add('snake');
+
+				}
+				gameArea.appendChild(snakeElement);
+			});
+			// display the food
+			food.forEach(f => {
+			foodElement = document.createElement('div');
+			foodElement.style.gridRowStart = f.y;
+			foodElement.style.gridColumnStart = f.x;
+			foodElement.classList.add('food');
+			gameArea.appendChild(foodElement);
+			});
+		
+		}
+		// main logic starts here
+		let hiscore = localStorage.getItem("hiscore");
+		if(hiscore === null){
+			hiscoreval = 0;
+			localStorage.setItem("hiscore", JSON.stringify(hiscoreval));
+		}
+		else{
+			hiscoreval = JSON.parse(hiscore);
+			hiscoreBox.innerHTML = "HiScore: " + hiscore;
+		}
+		window.requestAnimationFrame(main);
+
+		// mobile buttons
+		const buttons = document.querySelectorAll('.mobile-buttons button,.mobile-buttons-up-down button');
+		// for each button add event listener
+				
+		buttons.forEach(btn=>
+		
+		btn.addEventListener('click',e=>{
+			lastInputDir = {...inputDir};
+			console.log(e.target.id)
+			switch(e.target.id){
+				case "up":
+					
+					inputDir.x = 0;
+					inputDir.y = -1;
+					break;
+				case "down":
+					
+					inputDir.x = 0;
+					inputDir.y = 1;
+					break;
+				case "left":
+					
+					inputDir.x = -1;
+					inputDir.y = 0;
+					break;
+				case "right":
+					
+					inputDir.x = 1;
+					inputDir.y = 0;
+					break;
+				default:
+					break;
+			}
+
+
+		})
+		)
+		window.addEventListener('keydown', e => {
+			lastInputDir = {...inputDir};
+		
+			switch(e.key){
+				case "ArrowUp":
+					
+					inputDir.x = 0;
+					inputDir.y = -1;
+					break;
+				case "ArrowDown":
+					
+					inputDir.x = 0;
+					inputDir.y = 1;
+					break;
+				case "ArrowLeft":
+					
+					inputDir.x = -1;
+					inputDir.y = 0;
+					break;
+				case "ArrowRight":
+					
+					inputDir.x = 1;
+					inputDir.y = 0;
+					break;
+				default:
+					break;
+			}
+									console.log("move",lastInputDir,inputDir)
+
+		});
+
+
+
+
+	</script>
+</body>
+
+
+</html>
